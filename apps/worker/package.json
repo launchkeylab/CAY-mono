@@ -1,0 +1,15 @@
+{
+  "name": "worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch index.js",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@cay/database": "*",
+    "bullmq": "^5.14.1",
+    "ioredis": "^5.4.1",
+    "dotenv": "^16.4.5"
+  }
+}

@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String
+  password  String
+  timers    Timer[]
+  contacts  Contact[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  phone     String?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  @@index([userId])
+}
+
+model Timer {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  duration      Int
+  expiresAt     DateTime
+  status        TimerStatus @default(ACTIVE)
+  notifyEmails  String[]
+  notifyNames   String[]
+  latitude      Float?
+  longitude     Float?
+  accuracy      Float?
+  checkedInAt   DateTime?
+  escalatedAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  @@index([userId, status])
+  @@index([expiresAt, status])
+}
+
+enum TimerStatus {
+  ACTIVE
+  CHECKED_IN
+  ESCALATED
+  CANCELLED
+}
