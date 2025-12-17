@@ -31,6 +31,10 @@ packages/*/.env
 .idea/
 .claude/
 
+# Claude Code config
+CLAUDE.md
+agents.md
+
 # OS
 .DS_Store
 Thumbs.db
