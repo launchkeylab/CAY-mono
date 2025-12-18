@@ -1,11 +1,17 @@
 {
   "name": "cay",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev:web": "npm run dev -w apps/web",
     "dev:worker": "npm run dev -w apps/worker",
     "db:generate": "npm run generate -w packages/database",
     "db:push": "npm run db:push -w packages/database"
+  },
+  "dependencies": {
+    "@auth0/nextjs-auth0": "^4.14.0"
   }
 }
