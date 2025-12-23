@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
 import TimerForm from '@/components/TimerForm'
 import ActiveTimer from '@/components/ActiveTimer'
 
@@ -11,30 +10,33 @@ export default function TimerPage() {
     expiresAt: string
   } | null>(null)
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
+
+  const fetchTimerState = useCallback(async () => {
+    try {
+      const response = await fetch('/api/timers')
+      if (response.ok) {
+        const timer = await response.json()
+        setActiveTimer(timer ? {
+          id: timer.id,
+          expiresAt: timer.expiresAt
+        } : null)
+      } else {
+        setActiveTimer(null)
+      }
+    } catch (error) {
+      console.error('Failed to check for active timer:', error)
+      setActiveTimer(null)
+    }
+  }, [])
 
   useEffect(() => {
     const checkForActiveTimer = async () => {
-      try {
-        const response = await fetch('/api/timers')
-        if (response.ok) {
-          const timer = await response.json()
-          if (timer) {
-            setActiveTimer({
-              id: timer.id,
-              expiresAt: timer.expiresAt
-            })
-          }
-        }
-      } catch (error) {
-        console.error('Failed to check for active timer:', error)
-      } finally {
-        setLoading(false)
-      }
+      await fetchTimerState()
+      setLoading(false)
     }
 
     checkForActiveTimer()
-  }, [])
+  }, [fetchTimerState])
 
   const handleTimerStart = async (duration: number, emails: string[], names: string[]) => {
     try {
@@ -49,11 +51,8 @@ export default function TimerPage() {
       })
       
       if (response.ok) {
-        const timer = await response.json()
-        setActiveTimer({
-          id: timer.id,
-          expiresAt: timer.expiresAt
-        })
+        // Refetch timer state from server instead of assuming structure
+        await fetchTimerState()
       } else {
         const errorData = await response.json()
         console.error('Failed to start timer:', errorData.error)
@@ -74,9 +73,8 @@ export default function TimerPage() {
       })
       
       if (response.ok) {
-        setActiveTimer(null)
-        // Replicate auth navigation pattern for consistent routing
-        router.refresh()
+        // Refetch current server state instead of assuming null
+        await fetchTimerState()
       }
     } catch (error) {
       console.error('Failed to check in:', error)
@@ -92,9 +90,8 @@ export default function TimerPage() {
       })
       
       if (response.ok) {
-        setActiveTimer(null)
-        // Replicate auth navigation pattern for consistent routing
-        router.refresh()
+        // Refetch current server state instead of assuming null
+        await fetchTimerState()
       }
     } catch (error) {
       console.error('Failed to cancel timer:', error)
