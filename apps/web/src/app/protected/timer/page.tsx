@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from 'react'
 import TimerForm from '@/components/TimerForm'
 import ActiveTimer from '@/components/ActiveTimer'
 
+// Force dynamic rendering - prevents static caching of timer state
+export const dynamic = 'force-dynamic'
+
 export default function TimerPage() {
   const [activeTimer, setActiveTimer] = useState<{
     id: string
