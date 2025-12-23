@@ -1,8 +1,14 @@
 {
+  "framework": "nextjs",
   "buildCommand": "npm run db:generate && cd apps/web && npm run build",
   "outputDirectory": "apps/web/.next",
   "installCommand": "npm ci",
   "ignoreCommand": "git diff HEAD^ HEAD --quiet . ':(exclude)README.md'",
+  "functions": {
+    "apps/web/.next/server/app/**/*.js": {
+      "maxDuration": 30
+    }
+  },
   "env": {
     "NODE_ENV": "production",
     "PRISMA_GENERATE_SKIP_AUTOINSTALL": "true"
