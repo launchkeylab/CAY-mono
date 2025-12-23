@@ -5,8 +5,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "db:generate": "cd ../../packages/database && npm run generate"
+    "lint": "next lint"
   },
   "dependencies": {
     "@cay/database": "*",

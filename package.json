@@ -10,8 +10,5 @@
     "dev:worker": "npm run dev -w apps/worker",
     "db:generate": "npm run generate -w packages/database",
     "db:push": "npm run db:push -w packages/database"
-  },
-  "devDependencies": {
-    "typescript": "^5.6.3"
   }
 }
