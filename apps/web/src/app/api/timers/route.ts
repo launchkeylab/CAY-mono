@@ -70,7 +70,9 @@ export async function POST(request: NextRequest) {
       duration,
       notifyEmails,
       notifyNames,
-      webhookUrl = "localhost:3000/api/webhook",
+      webhookUrl = process.env.NEXT_PUBLIC_APP_URL 
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/api/webhook`
+        : "http://localhost:3000/api/webhook",
       latitude,
       longitude,
       accuracy,
@@ -83,13 +85,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // // TODO Validate webhook URL if provided
-    // if (webhookUrl && !validateWebhookUrl(webhookUrl)) {
-    //   return NextResponse.json(
-    //     { error: "Invalid webhook URL. Must use HTTPS (except localhost)" },
-    //     { status: 400 }
-    //   );
-    // }
+    // Validate webhook URL if provided
+    if (webhookUrl) {
+      const validation = validateWebhookUrl(webhookUrl);
+      if (!validation.valid) {
+        return NextResponse.json(
+          { error: `Invalid webhook URL: ${validation.error}` },
+          { status: 400 }
+        );
+      }
+    }
 
     const expiresAt = new Date(Date.now() + duration * 60 * 1000);
 

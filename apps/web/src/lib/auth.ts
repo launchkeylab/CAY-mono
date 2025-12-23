@@ -71,15 +71,38 @@ export async function getAuthenticatedUser(request: NextRequest) {
   return { id: localUser.id, email: localUser.email }
 }
 
-export function validateWebhookUrl(url: string): boolean {
+export function validateWebhookUrl(url: string): { valid: boolean; error?: string } {
   try {
     const parsedUrl = new URL(url)
-    // Only allow HTTPS URLs (except localhost for development)
-    if (parsedUrl.protocol !== 'https:' && !parsedUrl.hostname.includes('localhost')) {
-      return false
+    
+    // Check protocol - must be http or https
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return { valid: false, error: 'Invalid protocol. Only HTTP and HTTPS are allowed.' }
     }
-    return true
-  } catch {
-    return false
+    
+    // For non-localhost URLs, require HTTPS in production
+    if (process.env.NODE_ENV === 'production' && 
+        parsedUrl.protocol !== 'https:' && 
+        !parsedUrl.hostname.includes('localhost') &&
+        !parsedUrl.hostname.includes('127.0.0.1')) {
+      return { valid: false, error: 'HTTPS required for external URLs in production.' }
+    }
+    
+    // Check for valid hostname
+    if (!parsedUrl.hostname || parsedUrl.hostname.length === 0) {
+      return { valid: false, error: 'Invalid hostname.' }
+    }
+    
+    // Prevent private/internal networks in production (optional security measure)
+    const isPrivateNetwork = parsedUrl.hostname.match(/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/)
+    if (process.env.NODE_ENV === 'production' && 
+        isPrivateNetwork && 
+        !parsedUrl.hostname.includes('localhost')) {
+      return { valid: false, error: 'Private network URLs not allowed in production.' }
+    }
+    
+    return { valid: true }
+  } catch (error) {
+    return { valid: false, error: 'Invalid URL format.' }
   }
 }

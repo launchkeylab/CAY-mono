@@ -71,15 +71,29 @@ async function sendWebhookNotification(timer, attempt = 1, maxAttempts = 3) {
     return { success: true, status: response.status, attempt }
 
   } catch (error) {
-    console.error(`Webhook attempt ${attempt} failed for ${timer.webhookUrl}:`, error.message)
+    const errorMessage = error.message || 'Unknown error'
+    let diagnosticInfo = ''
     
-    // Log failed webhook attempt
+    // Provide diagnostic information based on error type
+    if (errorMessage.includes('fetch failed') || errorMessage.includes('ECONNREFUSED')) {
+      diagnosticInfo = ` [Likely cause: Server not reachable or wrong URL format. Check if URL includes http:// or https://]`
+    } else if (errorMessage.includes('timeout')) {
+      diagnosticInfo = ` [Likely cause: Server timeout. Webhook endpoint may be slow to respond]`
+    } else if (errorMessage.includes('ENOTFOUND')) {
+      diagnosticInfo = ` [Likely cause: DNS resolution failed. Check hostname in webhook URL]`
+    } else if (errorMessage.includes('Invalid URL')) {
+      diagnosticInfo = ` [Likely cause: Malformed webhook URL. Ensure URL includes protocol (http/https)]`
+    }
+    
+    console.error(`Webhook attempt ${attempt}/${maxAttempts} failed for ${timer.webhookUrl}: ${errorMessage}${diagnosticInfo}`)
+    
+    // Log failed webhook attempt with enhanced error info
     await db.webhookLog.create({
       data: {
         timerId: timer.id,
         url: timer.webhookUrl,
         status: 0,
-        error: error.message.substring(0, 1000),
+        error: `${errorMessage}${diagnosticInfo}`.substring(0, 1000),
         attempt
       }
     })
@@ -87,12 +101,13 @@ async function sendWebhookNotification(timer, attempt = 1, maxAttempts = 3) {
     // Retry logic
     if (attempt < maxAttempts) {
       const delay = Math.pow(2, attempt) * 1000 // Exponential backoff: 2s, 4s, 8s
-      console.log(`Retrying webhook in ${delay}ms...`)
+      console.log(`Retrying webhook in ${delay}ms (attempt ${attempt + 1}/${maxAttempts})...`)
       await new Promise(resolve => setTimeout(resolve, delay))
       return sendWebhookNotification(timer, attempt + 1, maxAttempts)
     }
 
-    return { success: false, error: error.message, attempt }
+    console.error(`❌ All webhook attempts failed for timer ${timer.id}. Final error: ${errorMessage}${diagnosticInfo}`)
+    return { success: false, error: `${errorMessage}${diagnosticInfo}`, attempt }
   }
 }
 
