@@ -9,7 +9,7 @@ dotenv.config()
 const connection = new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null })
 
 // Create email transporter (using Gmail SMTP for demo)
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,

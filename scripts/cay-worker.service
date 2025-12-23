@@ -1,0 +1,49 @@
+[Unit]
+Description=CAY Worker Service
+Documentation=https://github.com/your-repo/cay-monorepo
+Requires=docker.service
+After=docker.service network.target
+
+[Service]
+Type=notify
+Restart=always
+RestartSec=10
+User=ec2-user
+Group=docker
+WorkingDirectory=/opt/cay-worker
+
+# Environment
+Environment=NODE_ENV=production
+EnvironmentFile=-/opt/cay-worker/.env
+
+# Pre-start checks
+ExecStartPre=/usr/bin/docker --version
+ExecStartPre=/usr/local/bin/docker-compose --version
+
+# Start the service
+ExecStart=/usr/local/bin/docker-compose up --no-build
+ExecReload=/usr/local/bin/docker-compose restart worker
+
+# Stop the service
+ExecStop=/usr/local/bin/docker-compose down
+TimeoutStopSec=30
+
+# Health check
+ExecStartPost=/bin/sleep 10
+ExecStartPost=/usr/bin/docker exec cay-worker-worker-1 node -e "console.log('Worker health check passed')" || /bin/false
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/cay-worker
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cay-worker
+
+[Install]
+WantedBy=multi-user.target
+Alias=cay-worker

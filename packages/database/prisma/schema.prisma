@@ -40,6 +40,7 @@ model Timer {
   status        TimerStatus @default(ACTIVE)
   notifyEmails  String[]
   notifyNames   String[]
+  webhookUrl    String?
   latitude      Float?
   longitude     Float?
   accuracy      Float?
@@ -47,8 +48,22 @@ model Timer {
   escalatedAt   DateTime?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  webhookLogs   WebhookLog[]
   @@index([userId, status])
   @@index([expiresAt, status])
+}
+
+model WebhookLog {
+  id        String   @id @default(cuid())
+  timerId   String
+  timer     Timer    @relation(fields: [timerId], references: [id], onDelete: Cascade)
+  url       String
+  status    Int
+  response  String?
+  error     String?
+  attempt   Int      @default(1)
+  createdAt DateTime @default(now())
+  @@index([timerId])
 }
 
 enum TimerStatus {
