@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
         failed: failedLogs,
         successRate: Math.round(successRate * 10) / 10
       },
-      recentLogs: recentLogs.map(log => ({
+      recentLogs: recentLogs.map((log: any) => ({
         id: log.id,
         timerId: log.timerId,
         url: log.url,
