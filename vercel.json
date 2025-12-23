@@ -1,8 +1,8 @@
 {
-  "buildCommand": "npm run build --workspace=apps/web",
+  "buildCommand": "npm run build -w apps/web",
   "outputDirectory": "apps/web/.next",
   "framework": null,
-  "installCommand": "npm install && npm run db:generate",
+  "installCommand": "npm ci --include-workspace-root && npm run db:generate -w packages/database",
   "ignoreCommand": "git diff HEAD^ HEAD --quiet . ':(exclude)README.md'",
   "env": {
     "PRISMA_GENERATE_SKIP_AUTOINSTALL": "true"
