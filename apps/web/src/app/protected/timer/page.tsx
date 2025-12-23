@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import TimerForm from '@/components/TimerForm'
 import ActiveTimer from '@/components/ActiveTimer'
 
@@ -10,6 +11,7 @@ export default function TimerPage() {
     expiresAt: string
   } | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     const checkForActiveTimer = async () => {
@@ -73,6 +75,8 @@ export default function TimerPage() {
       
       if (response.ok) {
         setActiveTimer(null)
+        // Replicate auth navigation pattern for consistent routing
+        router.refresh()
       }
     } catch (error) {
       console.error('Failed to check in:', error)
@@ -89,6 +93,8 @@ export default function TimerPage() {
       
       if (response.ok) {
         setActiveTimer(null)
+        // Replicate auth navigation pattern for consistent routing
+        router.refresh()
       }
     } catch (error) {
       console.error('Failed to cancel timer:', error)
