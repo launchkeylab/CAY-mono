@@ -1,4 +1,4 @@
-import { Redis } from "@upstash/redis";
+import { Redis } from "ioredis";
 import { Worker } from "bullmq";
 import { db } from "@cay/database";
 import dotenv from "dotenv";
@@ -6,11 +6,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 function createRedisConnection() {
-  // Check if Upstash Redis environment variables are available
-  if (process.env.UPSTASH_REDIS_ENDPOINT && process.env.UPSTASH_REDIS_TOKEN) {
-    return new Redis({
-      host: process.env.UPSTASH_REDIS_ENDPOINT,
-      token: process.env.UPSTASH_REDIS_TOKEN,
+  // Check if Redis URL is available (Upstash or local)
+  if (process.env.REDIS_URL) {
+    return new Redis(process.env.REDIS_URL, {
+      maxRetriesPerRequest: null,
+      lazyConnect: true,
     });
   }
 
