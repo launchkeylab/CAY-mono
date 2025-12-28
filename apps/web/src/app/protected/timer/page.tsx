@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import TimerForm from '@/components/TimerForm'
+import { useCallback, useEffect, useState } from 'react'
+
 import ActiveTimer from '@/components/ActiveTimer'
+import TimerForm from '@/components/TimerForm'
 
 // Force dynamic rendering - prevents static caching of timer state
 export const dynamic = 'force-dynamic'
@@ -17,6 +18,7 @@ export default function TimerPage() {
   const fetchTimerState = useCallback(async () => {
     try {
       const response = await fetch('/api/timers')
+      console.log('FetchTimerState response:', response)
       if (response.ok) {
         const timer = await response.json()
         setActiveTimer(timer ? {
@@ -52,7 +54,7 @@ export default function TimerPage() {
           notifyNames: names
         })
       })
-      
+
       if (response.ok) {
         // Refetch timer state from server instead of assuming structure
         await fetchTimerState()
@@ -69,29 +71,65 @@ export default function TimerPage() {
 
   const handleCheckIn = async () => {
     if (!activeTimer) return
-    
+
+    console.log('[FRONTEND] Starting check-in process for timer:', activeTimer.id)
+    console.log('[FRONTEND] Active timer state:', activeTimer)
+
     try {
-      const response = await fetch(`/api/timers/${activeTimer.id}/checkin`, {
-        method: 'POST'
+      const url = `/api/timers/${activeTimer.id}/checkin`
+      console.log('[FRONTEND] Making request to:', url)
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       })
       
+      console.log('[FRONTEND] Check-in response status:', response.status)
+      console.log('[FRONTEND] Check-in response ok:', response.ok)
+      console.log('[FRONTEND] Check-in response headers:', Object.fromEntries(response.headers.entries()))
+
       if (response.ok) {
+        const responseData = await response.json()
+        console.log('[FRONTEND] Check-in success response data:', responseData)
         // Refetch current server state instead of assuming null
         await fetchTimerState()
+        console.log('[FRONTEND] Timer state refetched after check-in')
+      } else {
+        // Log error details
+        const errorText = await response.text()
+        console.error('[FRONTEND] Check-in failed - status:', response.status)
+        console.error('[FRONTEND] Check-in failed - response text:', errorText)
+        
+        try {
+          const errorData = JSON.parse(errorText)
+          console.error('[FRONTEND] Check-in failed - error data:', errorData)
+          alert(`Check-in failed: ${errorData.error || 'Unknown error'}`)
+        } catch (parseError) {
+          console.error('[FRONTEND] Could not parse error response as JSON')
+          alert(`Check-in failed with status ${response.status}`)
+        }
       }
     } catch (error) {
-      console.error('Failed to check in:', error)
+      console.error('[FRONTEND] Check-in network error:', error)
+      console.error('[FRONTEND] Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'No stack'
+      })
+      alert('Network error during check-in. Please try again.')
     }
   }
 
   const handleCancel = async () => {
     if (!activeTimer) return
-    
+
     try {
       const response = await fetch(`/api/timers/${activeTimer.id}/cancel`, {
         method: 'POST'
       })
-      
+
       if (response.ok) {
         // Refetch current server state instead of assuming null
         await fetchTimerState()
@@ -118,7 +156,7 @@ export default function TimerPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         <h1 className="text-3xl font-bold text-center mb-8">CAY Safety Timer</h1>
-        
+
         {activeTimer ? (
           <ActiveTimer
             timerId={activeTimer.id}
