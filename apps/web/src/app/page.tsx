@@ -1,86 +1,32 @@
-'use client'
-
-import { useState } from 'react'
-import TimerForm from '@/components/TimerForm'
-import ActiveTimer from '@/components/ActiveTimer'
+import Link from "next/link";
 
 export default function HomePage() {
-  const [activeTimer, setActiveTimer] = useState<{
-    id: string
-    expiresAt: string
-  } | null>(null)
-
-  const handleTimerStart = async (duration: number, emails: string[], names: string[]) => {
-    try {
-      const response = await fetch('/api/timers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          duration,
-          notifyEmails: emails,
-          notifyNames: names
-        })
-      })
-      
-      if (response.ok) {
-        const timer = await response.json()
-        setActiveTimer({
-          id: timer.id,
-          expiresAt: timer.expiresAt
-        })
-      }
-    } catch (error) {
-      console.error('Failed to start timer:', error)
-    }
-  }
-
-  const handleCheckIn = async () => {
-    if (!activeTimer) return
-    
-    try {
-      const response = await fetch(`/api/timers/${activeTimer.id}/checkin`, {
-        method: 'POST'
-      })
-      
-      if (response.ok) {
-        setActiveTimer(null)
-      }
-    } catch (error) {
-      console.error('Failed to check in:', error)
-    }
-  }
-
-  const handleCancel = async () => {
-    if (!activeTimer) return
-    
-    try {
-      const response = await fetch(`/api/timers/${activeTimer.id}/cancel`, {
-        method: 'POST'
-      })
-      
-      if (response.ok) {
-        setActiveTimer(null)
-      }
-    } catch (error) {
-      console.error('Failed to cancel timer:', error)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        <h1 className="text-3xl font-bold text-center mb-8">CAY Safety Timer</h1>
+      <div className="w-full max-w-lg text-center">
+        <h1 className="text-3xl font-bold mb-8">CAY Safety Timer</h1>
         
-        {activeTimer ? (
-          <ActiveTimer
-            timerId={activeTimer.id}
-            expiresAt={activeTimer.expiresAt}
-            onCheckIn={handleCheckIn}
-            onCancel={handleCancel}
-          />
-        ) : (
-          <TimerForm onTimerStart={handleTimerStart} />
-        )}
+        <div className="bg-white rounded-lg shadow-md p-8">
+          <h2 className="text-xl font-semibold mb-4">Authentication Required</h2>
+          <p className="text-gray-600 mb-6">
+            Please sign in to access the safety timer feature.
+          </p>
+          
+          <div className="space-y-3">
+            <Link 
+              href="/auth/login"
+              className="block w-full bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition"
+            >
+              Sign In
+            </Link>
+            <Link 
+              href="/auth/sign-up"
+              className="block w-full bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition"
+            >
+              Create Account
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )

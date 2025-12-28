@@ -1,18 +1,20 @@
-import { redirect } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/server";
 import { InfoIcon } from "lucide-react";
 import { Suspense } from "react";
 
 async function UserDetails() {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getUser();
 
-  if (error || !data?.claims) {
-    redirect("/auth/login");
+  if (!data.user) {
+    return "No user found";
   }
 
-  return JSON.stringify(data.claims, null, 2);
+  return JSON.stringify({
+    id: data.user.id,
+    email: data.user.email,
+    created_at: data.user.created_at,
+  }, null, 2);
 }
 
 export default function ProtectedPage() {
@@ -28,7 +30,7 @@ export default function ProtectedPage() {
       <div className="flex flex-col gap-2 items-start">
         <h2 className="font-bold text-2xl mb-4">Your user details</h2>
         <pre className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
-          <Suspense>
+          <Suspense fallback={<div>Loading user details...</div>}>
             <UserDetails />
           </Suspense>
         </pre>
