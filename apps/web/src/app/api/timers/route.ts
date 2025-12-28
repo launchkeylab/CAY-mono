@@ -2,17 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser, validateWebhookUrl } from "@/lib/auth";
 
 import { Queue } from "bullmq";
-import Redis from "ioredis";
 import { db } from "@/lib/db";
+import { redisConnection } from "@/lib/redis";
 
-const connection = new Redis(
-  process.env.REDIS_URL || "redis://localhost:6379",
-  {
-    maxRetriesPerRequest: null,
-  }
-);
-
-const timerQueue = new Queue("timers", { connection });
+const timerQueue = new Queue("timers", { connection: redisConnection });
 
 export async function GET(request: NextRequest) {
   try {

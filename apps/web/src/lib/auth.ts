@@ -3,29 +3,47 @@ import { createServerClient } from '@supabase/ssr'
 import { db } from '@/lib/db'
 
 export async function getAuthenticatedUser(request: NextRequest) {
+  console.log('[AUTH] Starting authentication process')
+  console.log('[AUTH] Request URL:', request.url)
+  console.log('[AUTH] Checking Supabase configuration...')
+  
   // Check if Supabase is properly configured
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.warn('Supabase not configured, falling back to demo user')
+    console.warn('[AUTH] Supabase not configured, falling back to demo user')
+    console.log('[AUTH] SUPABASE_URL exists:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('[AUTH] SUPABASE_ANON_KEY exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
     
-    // Create or get demo user for development
-    let demoUser = await db.user.findFirst({
-      where: { email: 'demo@cay.com' }
-    })
-    
-    if (!demoUser) {
-      demoUser = await db.user.create({
-        data: {
-          id: 'demo-user-id',
-          email: 'demo@cay.com',
-          name: 'Demo User',
-          password: 'demo-password' // In production, this would be properly hashed
-        }
+    try {
+      // Create or get demo user for development
+      console.log('[AUTH] Looking for demo user...')
+      let demoUser = await db.user.findFirst({
+        where: { email: 'demo@cay.com' }
       })
+      
+      if (!demoUser) {
+        console.log('[AUTH] Demo user not found, creating...')
+        demoUser = await db.user.create({
+          data: {
+            id: 'demo-user-id',
+            email: 'demo@cay.com',
+            name: 'Demo User',
+            password: 'demo-password' // In production, this would be properly hashed
+          }
+        })
+        console.log('[AUTH] Demo user created:', demoUser.id)
+      } else {
+        console.log('[AUTH] Demo user found:', demoUser.id)
+      }
+      
+      return { id: demoUser.id, email: demoUser.email }
+    } catch (dbError) {
+      console.error('[AUTH] Database error when handling demo user:', dbError)
+      throw dbError
     }
-    
-    return { id: demoUser.id, email: demoUser.email }
   }
 
+  console.log('[AUTH] Supabase is configured, creating client...')
+  
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -33,42 +51,61 @@ export async function getAuthenticatedUser(request: NextRequest) {
       cookies: {
         getAll: () => {
           const cookieStore = request.headers.get('cookie') || ''
-          return cookieStore.split(';').map(cookie => {
+          console.log('[AUTH] Raw cookie header:', cookieStore)
+          const cookies = cookieStore.split(';').map(cookie => {
             const [name, value] = cookie.trim().split('=')
             return { name, value: value || '' }
           })
+          console.log('[AUTH] Parsed cookies:', cookies.length, 'cookies')
+          return cookies
         },
         setAll: () => {
           // No-op for server-side
+          console.log('[AUTH] setAll called (no-op)')
         },
       },
     }
   )
 
+  console.log('[AUTH] Getting user from Supabase...')
   const { data: { user }, error } = await supabase.auth.getUser()
+  console.log('[AUTH] Supabase auth result - error:', error)
+  console.log('[AUTH] Supabase auth result - user exists:', !!user)
+  console.log('[AUTH] Supabase user ID:', user?.id)
   
   if (error || !user) {
+    console.log('[AUTH] Authentication failed, returning null')
     return null
   }
 
-  // Ensure user exists in our local database
-  let localUser = await db.user.findUnique({
-    where: { id: user.id }
-  })
-
-  if (!localUser) {
-    // Create local user record for Supabase user
-    localUser = await db.user.create({
-      data: {
-        id: user.id,
-        email: user.email || '',
-        name: user.user_metadata?.name || user.email || '',
-        password: '' // Supabase handles auth, we don't store password
-      }
+  console.log('[AUTH] User authenticated, checking local database...')
+  try {
+    // Ensure user exists in our local database
+    let localUser = await db.user.findUnique({
+      where: { id: user.id }
     })
-  }
+    console.log('[AUTH] Local user lookup result:', localUser ? 'FOUND' : 'NOT_FOUND')
 
-  return { id: localUser.id, email: localUser.email }
+    if (!localUser) {
+      console.log('[AUTH] Creating local user record...')
+      // Create local user record for Supabase user
+      localUser = await db.user.create({
+        data: {
+          id: user.id,
+          email: user.email || '',
+          name: user.user_metadata?.name || user.email || '',
+          password: '' // Supabase handles auth, we don't store password
+        }
+      })
+      console.log('[AUTH] Local user created:', localUser.id)
+    }
+
+    console.log('[AUTH] Authentication successful for user:', localUser.id)
+    return { id: localUser.id, email: localUser.email }
+  } catch (dbError) {
+    console.error('[AUTH] Database error during user lookup/creation:', dbError)
+    throw dbError
+  }
 }
 
 export function validateWebhookUrl(url: string): { valid: boolean; error?: string } {
