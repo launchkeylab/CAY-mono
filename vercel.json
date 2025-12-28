@@ -7,19 +7,5 @@
   "env": {
     "NODE_ENV": "production",
     "PRISMA_GENERATE_SKIP_AUTOINSTALL": "true"
-  },
-  "functions": {
-    "apps/web/src/app/api/timers/*/checkin/route.ts": {
-      "maxDuration": 30,
-      "memory": 512
-    },
-    "apps/web/src/app/api/timers/*/cancel/route.ts": {
-      "maxDuration": 30,
-      "memory": 512
-    },
-    "apps/web/src/app/api/timers/route.ts": {
-      "maxDuration": 30,
-      "memory": 512
-    }
   }
 }
