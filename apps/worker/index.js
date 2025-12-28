@@ -192,8 +192,9 @@ const worker = new Worker(
       };
 
       try {
-        await transporter.sendMail(mailOptions);
-        console.log(`Notification sent to: ${email}`);
+        //TODO implement email/twillio integration
+        // await transporter.sendMail(mailOptions);
+        console.log(`Notification sent to: ${email} - ${mailOptions}`);
         return { email, sent: true };
       } catch (error) {
         console.error(`Failed to send email to ${email}:`, error);
