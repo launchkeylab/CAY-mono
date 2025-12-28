@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { Queue } from 'bullmq'
-import Redis from 'ioredis'
 import { getAuthenticatedUser } from '@/lib/auth'
+import { redisConnection } from '@/lib/redis'
 
-const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', { 
-  maxRetriesPerRequest: null 
-})
-
-const timerQueue = new Queue('timers', { connection })
+const timerQueue = new Queue('timers', { connection: redisConnection })
 
 export async function POST(
   request: NextRequest,
