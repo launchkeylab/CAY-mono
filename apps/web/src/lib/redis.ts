@@ -1,28 +1,17 @@
-import Redis from 'ioredis';
+import { Redis } from "@upstash/redis";
 
 function createRedisConnection() {
   // Check if Upstash Redis environment variables are available
-  if (process.env.UPSTASH_REDIS_ENDPOINT && process.env.UPSTASH_REDIS_PASSWORD) {
+  if (process.env.UPSTASH_REDIS_ENDPOINT && process.env.UPSTASH_REDIS_TOKEN) {
     return new Redis({
       host: process.env.UPSTASH_REDIS_ENDPOINT,
-      port: 6379,
-      password: process.env.UPSTASH_REDIS_PASSWORD,
-      tls: {},
-      maxRetriesPerRequest: null,
-    });
-  }
-
-  // Fallback to traditional Redis URL (for backward compatibility)
-  if (process.env.REDIS_URL) {
-    return new Redis(process.env.REDIS_URL, {
-      maxRetriesPerRequest: null,
+      token: process.env.UPSTASH_REDIS_TOKEN,
     });
   }
 
   // Local development fallback
-  return new Redis('redis://localhost:6379', {
-    maxRetriesPerRequest: null,
-  });
+  // return new Redis("redis://localhost:6379", {
+  //   maxRetriesPerRequest: null,
+  // });
 }
-
 export const redisConnection = createRedisConnection();
