@@ -7,7 +7,7 @@ This guide covers deploying the CAY worker service to AWS EC2 while keeping the 
 - **Web App**: Deployed on Vercel (Next.js)
 - **Worker Service**: Deployed on EC2 (Node.js + BullMQ)
 - **Database**: PostgreSQL (shared between web and worker)
-- **Redis**: Job queue for BullMQ (on EC2)
+- **Redis**: Job queue for BullMQ (on upstash)
 
 ## Prerequisites
 
@@ -48,6 +48,7 @@ Outbound Rules:
 ## Environment Configuration
 
 1. **Create environment file** on EC2:
+
    ```bash
    ssh ec2-user@YOUR_EC2_IP
    cd /opt/cay-worker
@@ -140,15 +141,18 @@ REDIS_URL="redis://YOUR_EC2_IP:6379"
 ## Scaling Considerations
 
 ### Vertical Scaling
+
 - Upgrade EC2 instance type (t3.small, t3.medium, etc.)
 - Increase Redis memory configuration
 
 ### Horizontal Scaling
+
 - Deploy multiple worker instances
 - Use AWS ElastiCache for Redis
 - Implement load balancing
 
 ### Managed Services Migration
+
 - **Database**: Migrate to AWS RDS
 - **Redis**: Migrate to AWS ElastiCache
 - **Monitoring**: Add CloudWatch integration
@@ -158,6 +162,7 @@ REDIS_URL="redis://YOUR_EC2_IP:6379"
 ### Common Issues
 
 1. **Worker not processing jobs**
+
    ```bash
    # Check Redis connection
    docker-compose exec worker node -e "
@@ -168,6 +173,7 @@ REDIS_URL="redis://YOUR_EC2_IP:6379"
    ```
 
 2. **Database connection issues**
+
    ```bash
    # Test database connectivity
    docker-compose exec worker node -e "
@@ -177,6 +183,7 @@ REDIS_URL="redis://YOUR_EC2_IP:6379"
    ```
 
 3. **Service won't start**
+
    ```bash
    # Check systemd logs
    journalctl -u cay-worker -n 50
@@ -201,10 +208,12 @@ redis-cli --latency-monitor
 ## Backup and Recovery
 
 ### Database Backups
+
 - Ensure your PostgreSQL database has automated backups
 - Test restore procedures regularly
 
 ### Redis Persistence
+
 Redis is configured with persistence enabled. Data is stored in Docker volumes.
 
 ```bash
@@ -218,12 +227,14 @@ docker volume inspect cay-worker_redis_data
 ## Security Best Practices
 
 1. **Keep system updated**
+
    ```bash
    sudo yum update -y  # Amazon Linux
    sudo apt update && sudo apt upgrade -y  # Ubuntu
    ```
 
 2. **Monitor access logs**
+
    ```bash
    sudo tail -f /var/log/secure  # SSH access logs
    ```
@@ -244,6 +255,7 @@ docker volume inspect cay-worker_redis_data
 ## Support and Maintenance
 
 Regular maintenance tasks:
+
 - Monitor disk usage (`df -h`)
 - Check Docker image updates
 - Review application logs
