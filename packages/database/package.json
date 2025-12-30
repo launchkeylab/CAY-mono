@@ -1,7 +1,14 @@
 {
   "name": "@cay/database",
   "version": "1.0.0",
+  "type": "module",
   "main": "./index.js",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.js"
+    }
+  },
   "scripts": {
     "generate": "prisma generate",
     "db:push": "prisma db push"
